@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playing Card Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        
+        /* File upload area styling. */
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f8f9ff;
+        }
+        
+        .upload-area.dragover {
+            background: #f0f0ff;
+            border-color: #764ba2;
+        }
+        
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .file-info {
+            color: #999;
+            font-size: 0.85em;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        /* Image preview styling. */
+        #imagePreview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Button styling. */
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s ease;
+            display: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* Results area styling. */
+        #results {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .result-card {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .main-prediction {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .prediction-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .prediction-value {
+            color: #667eea;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .confidence {
+            color: #764ba2;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        /* Top 5 predictions styling. */
+        .top5-title {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 10px;
+            transition: transform 0.2s ease;
+        }
+        
+        .prediction-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .prediction-name {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .prediction-percent {
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        /* Loading spinner styling. */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Error message styling. */
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        /* New prediction button styling. */
+        .btn-secondary {
+            background: #6c757d;
+            margin-top: 15px;
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 5px 20px rgba(108, 117, 125, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎴 Playing Card Classifier</h1>
+        <p class="subtitle">Upload a playing card image to classify it using AI</p>
+        
+        <!-- File upload area. -->
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📤</div>
+            <div class="upload-text">Click to upload or drag and drop</div>
+            <div class="file-info">Supports: JPG, JPEG, PNG (Max 16MB)</div>
+            <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png">
+        </div>
+        
+        <!-- Image preview. -->
+        <img id="imagePreview" alt="Preview">
+        
+        <!-- Predict button. -->
+        <button class="btn" id="predictBtn">Classify Card</button>
+        
+        <!-- Loading spinner. -->
+        <div class="spinner" id="spinner"></div>
+        
+        <!-- Error message. -->
+        <div class="error" id="error"></div>
+        
+        <!-- Results area. -->
+        <div id="results">
+            <div class="result-card">
+                <div class="main-prediction">
+                    <div class="prediction-label">Predicted Card</div>
+                    <div class="prediction-value" id="topPrediction"></div>
+                    <div class="confidence" id="confidence"></div>
+                </div>
+            </div>
+            
+            <div class="result-card">
+                <div class="top5-title">Top 5 Predictions</div>
+                <div id="top5List"></div>
+            </div>
+            
+            <button class="btn btn-secondary" id="newPredictionBtn">Classify Another Card</button>
+        </div>
+    </div>
+
+    <script>
+        // Get DOM elements.
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const predictBtn = document.getElementById('predictBtn');
+        const spinner = document.getElementById('spinner');
+        const error = document.getElementById('error');
+        const results = document.getElementById('results');
+        const newPredictionBtn = document.getElementById('newPredictionBtn');
+        
+        let selectedFile = null;
+        
+        // Handle click on upload area.
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // Handle file selection.
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+        
+        // Handle drag and drop events.
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+        
+        // Process selected file.
+        function handleFile(file) {
+            if (!file) return;
+            
+            // Validate file type.
+            if (!file.type.match('image/(jpeg|jpg|png)')) {
+                showError('Please select a valid image file (JPG, JPEG, or PNG).');
+                return;
+            }
+            
+            selectedFile = file;
+            
+            // Show preview.
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+                predictBtn.style.display = 'block';
+                results.style.display = 'none';
+                error.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Handle prediction button click.
+        predictBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            // Show loading state.
+            predictBtn.disabled = true;
+            spinner.style.display = 'block';
+            error.style.display = 'none';
+            results.style.display = 'none';
+            
+            // Create form data.
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            try {
+                // Send prediction request.
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Prediction failed');
+                }
+                
+                // Display results.
+                displayResults(data);
+                
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                // Hide loading state.
+                predictBtn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+        
+        // Display prediction results.
+        function displayResults(data) {
+            // Show main prediction.
+            document.getElementById('topPrediction').textContent = data.top_prediction;
+            document.getElementById('confidence').textContent = data.confidence + '%';
+            
+            // Show top 5 predictions.
+            const top5List = document.getElementById('top5List');
+            top5List.innerHTML = '';
+            
+            data.top_5.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'prediction-item';
+                div.innerHTML = `
+                    <span class="prediction-name">${index + 1}. ${item.class}</span>
+                    <span class="prediction-percent">${item.confidence}%</span>
+                `;
+                top5List.appendChild(div);
+            });
+            
+            // Show results area.
+            results.style.display = 'block';
+        }
+        
+        // Show error message.
+        function showError(message) {
+            error.textContent = '❌ ' + message;
+            error.style.display = 'block';
+        }
+        
+        // Handle new prediction button.
+        newPredictionBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            imagePreview.style.display = 'none';
+            predictBtn.style.display = 'none';
+            results.style.display = 'none';
+            error.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
