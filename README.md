@@ -6,17 +6,17 @@ Deep learning model for classifying playing cards using PyTorch with GPU optimiz
 
 ### 1. Install Dependencies
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ### 2. Train the Model
 ```bash
-python train_model.py
+uv run train_model.py
 ```
 
 ### 3. Run Web Interface
 ```bash
-python app.py
+uv run app.py
 ```
 
 Then open browser to: **http://127.0.0.1:5000**
@@ -44,7 +44,7 @@ data/
 - `train_model.py` - Training pipeline and model definition.
 - `app.py` - Flask web application for predictions.
 - `templates/index.html` - Web interface (single page).
-- `requirements.txt` - Python dependencies.
+- `pyproject.toml` - Project metadata and dependencies.
 - `best_card_model.pth` - Trained model (generated after training).
 - `training_history.png` - Training metrics plot (generated).
 
@@ -121,7 +121,7 @@ BATCH_SIZE = 16  # or 8
 **Model Not Found** (when running web app):
 ```bash
 # Train the model first
-python train_model.py
+uv run train_model.py
 ```
 
 **Port Already in Use**:
@@ -133,6 +133,7 @@ app.run(debug=True, host='0.0.0.0', port=5001)
 ## Requirements
 
 - Python 3.8+
+- uv (package manager)
 - PyTorch 2.0+
 - CUDA (optional, for GPU acceleration)
 - 8GB+ RAM (16GB+ recommended for GPU training)
